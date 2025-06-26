@@ -3,7 +3,7 @@ create .env file in movies folder with:\
 <br>
 `POSTGRES_DB=movies_db`\
 `POSTGRES_USER=movies_user`\
-`POSTGRES_PASSWORD=******* (add password)`\
+`POSTGRES_PASSWORD=*******`(add password)\
 <br>
 `PG_HOST=localhost`\
 `PG_PORT=5433`\
