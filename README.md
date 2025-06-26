@@ -19,4 +19,4 @@ psql -U movies_user -d movies_db -p 5433 -c "COPY (SELECT 'INSERT INTO seen_movi
 \
 Go to frontend\
 npm install\
-npm run dev\
+npm run dev
