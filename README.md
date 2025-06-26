@@ -19,3 +19,6 @@ The seen movies list can be saved with:\
 Go to frontend\
 `npm install`\
 `npm run dev`
+
+open page with:
+`http://localhost:5175/`
