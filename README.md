@@ -1,4 +1,4 @@
-# movies\
+# movies
 create .env file in movies folder with:\
 \
 POSTGRES_DB=movies_db\
