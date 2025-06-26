@@ -13,7 +13,7 @@ create .env file in movies folder with:\
 <br>
 First run `docker compose up -d --build` from movies folder\
 then run `python tmdb_list_export.py` to get my movie list (to change list see file)\
-The seen movies list (seen_movies) can be saved with:\
+The seen movies list (seen_movies) can be saved in a init_seen.sql file with:\
 `psql -U movies_user -d movies_db -p 5433 -c "COPY (SELECT 'INSERT INTO seen_movies (movie_id) VALUES (' || movie_id || ');' FROM seen_movies) TO STDOUT" > init_seen.sql`\
 <br>
 and later restored with\
