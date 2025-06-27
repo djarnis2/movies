@@ -1,0 +1,4 @@
+fastapi
+uvicorn[standard]
+psycopg2-binary      # allerede brugt af db.py
+python-dotenv

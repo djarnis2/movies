@@ -1,0 +1,47 @@
+# Node
+node_modules/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# React/Vite
+frontend/dist/
+frontend/.vite/
+frontend/.env
+
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.env
+*.sqlite3
+*.db
+
+# Docker
+*.pid
+*.sock
+*.pid.lock
+*.tar
+docker-compose.override.yml
+
+# System
+.DS_Store
+Thumbs.db
+
+# CSV / backup
+tmdb_my_movies.csv
+init_seen_backup.sql
+init.sql
+dokumenter/
+
+# IDE/Editor
+.vscode/
+.idea/
+
+# OS-specific
+*.swp
+*.swo
+*.bak
