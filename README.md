@@ -17,7 +17,7 @@ The seen movies list (seen_movies) can be saved in a init_seen.sql file with:\
 `psql -U movies_user -d movies_db -p 5433 -c "COPY (SELECT 'INSERT INTO seen_movies (movie_id) VALUES (' || movie_id || ');' FROM seen_movies) TO STDOUT" > init_seen.sql`\
 <br>
 and later restored with\
-`psql -U movies_user -d movies_db -f init_seen.sql`
+`psql -U movies_user -d movies_db -p 5433 -f init_seen.sql`
 <br>
 Go to frontend\
 `npm install`\
