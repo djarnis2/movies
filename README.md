@@ -16,7 +16,7 @@
 ## 2. Start database
 
 Run `docker compose up -d --build` from root folder\
-Run `python tmdb_list_export.py` # to change list (see file line 77)
+Run `python tmdb_list_export.py` # to change list (see file line 77) ! This is a scraper (usefull because the api doesn't allow more than 20 movies)  and it will take about 40 sec per page (50 movies)
 
 ## 3. Install requirements for python
 
@@ -32,7 +32,7 @@ Go back to root folder and start the backend from here (db.py is in root folder 
 
 ## 5. Start frontend
 
-Go to frontend and start the fronted with:\
+Open a new terminal, go to frontend and start the fronted with:\
 `cd frontend`\
 `npm install`\
 `npm run dev`
@@ -69,3 +69,6 @@ psql -U movies_user -d movies_db -p 5433 -f init_seen.sql
 
 ## 9. Make your own list
 https://www.themoviedb.org/list/new
+
+# Known issues
+The scraper currently sometimes causes doubles
