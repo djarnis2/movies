@@ -129,5 +129,3 @@ start http://localhost:5173/
 
 ```
 
-# Known issues
-The scraper currently sometimes causes doubles
