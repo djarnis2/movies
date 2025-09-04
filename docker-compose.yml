@@ -15,6 +15,20 @@ services:
       test: ["CMD-SHELL", "pg_isready -U ${PG_USER} -d ${PG_DB}"]
       interval: 10s
       retries: 5
+  flyway:
+    image: flyway/flyway:10
+    depends_on:
+      - pg
+    environment:
+      FLYWAY_URL: jdbc:postgresql://pg:5432/${PG_DB}
+      FLYWAY_USER: ${PG_USER}
+      FLYWAY_PASSWORD: ${PG_PASSWORD}
+      FLYWAY_BASELINE_ON_MIGRATE: "true"
+      FLYWAY_BASELINE_VERSION: "0"
+    volumes:
+      - ./db/migrations:/flyway/sql:ro
+    command: -connectRetries=60 migrate
+    restart: "no"
 
 volumes:
   pg_movies_data:

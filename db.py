@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 _cfg = dict(
-    host     = os.getenv("PG_HOST", "localhost"),
+    host     = os.getenv("PG_HOST", "localhost"), # in docker network: pg
     port     = int(os.getenv("PG_PORT", 5432)),
     dbname   = os.getenv("PG_DB"),
     user     = os.getenv("PG_USER"),
@@ -14,11 +14,11 @@ _cfg = dict(
 )
 
 def get_connection():
-    """Én central måde at oprette (og evt. genbruge) forbindelsen på."""
+    """A central way to make (and maybe reuse) connection."""
     return psycopg2.connect(**_cfg)
 
 def init_schema():
-    """Kør én gang ved start: sikrer tabel og unikke constraints."""
+    """Run one time at upstart: secure table and unique constraints."""
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute("""
         CREATE TABLE IF NOT EXISTS movies (
@@ -28,15 +28,29 @@ def init_schema():
             rating      TEXT,
             description TEXT,
             poster_path TEXT,
-            rel_url         TEXT,
-            UNIQUE (title, year)
+            rel_url     TEXT
         );
         CREATE TABLE IF NOT EXISTS seen_movies (
             movie_id INTEGER PRIMARY KEY
-                       REFERENCES movies(id)      -- læg FK-relation på med det samme
-                       ON DELETE CASCADE         -- fjern “seen” hvis filmen slettes
+                       REFERENCES movies(id)      -- add FK-relation
+                       ON DELETE CASCADE         -- remove “seen” if film is deleted.
         );
+                    
+        -- Make sure rel_url is NOT NULL
+        DO $$
+        BEGIN
+            BEGIN
+                ALTER TABLE movies ALTER column rel_url SET NOT NULL;
+            EXCEPTION WHEN others THEN
+                -- ignore if already set
+                NULL;
+            END;
+        END$$;
+                    
+        -- idempotent UNIQUE index
+        CREATE UNIQUE INDEX IF NOT EXISTS ux_movies_rel_url ON movies(rel_url);
         """)
+        conn.commit()
 
 def insert_movies(batch):
     """
@@ -50,7 +64,13 @@ def insert_movies(batch):
     insert_sql = """
     INSERT INTO movies (title, year, rating, description, poster_path, rel_url)
     VALUES %s
-    ON CONFLICT (title, year) DO NOTHING
+    ON CONFLICT (rel_url) DO UPDATE
+    SET
+        title       = EXCLUDED.title,
+        year        = COALESCE(EXCLUDED.year, movies.year),   -- kun opdatér hvis vi har et år
+        rating      = COALESCE(EXCLUDED.rating, movies.rating),
+        description = COALESCE(NULLIF(EXCLUDED.description, ''), movies.description),
+        poster_path = COALESCE(EXCLUDED.poster_path, movies.poster_path)
     """
     with get_connection() as conn, conn.cursor() as cur:
         execute_values(cur, insert_sql, batch, page_size=50)
