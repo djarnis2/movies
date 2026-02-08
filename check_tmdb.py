@@ -1,6 +1,6 @@
 import os, requests
 
-token = os.getenv("VITE_TMDB_V4_TOKEN") or os.getenv("TMDB_TOKEN")
+token = os.getenv("TMDB_TOKEN")
 print("token?", bool(token), "len=", (len(token) if token else 0))
 
 h = {"Authorization": f"Bearer {token}"}

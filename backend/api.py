@@ -21,7 +21,7 @@ app.add_middleware(
 )
 
 def get_tmdb_token():
-    return os.getenv("TMDB_TOKEN") or os.getenv("VITE_TMDB_V4_TOKEN")
+    return os.getenv("TMDB_TOKEN")
 
 
 @app.get("/movies")
@@ -125,7 +125,7 @@ def import_list(listId: int, limit: int = 0):
     if not token:
         raise HTTPException(
             400,
-            "Missing TMDB_TOKEN (or VITE_TMDB_V4_TOKEN). Add it to docker-compose environment and restart."
+            "Missing TMDB_TOKEN. Add it to docker-compose environment and restart."
         )
     
     cmd = ["python", "tmdb_list_export.py", str(listId)]
@@ -151,7 +151,7 @@ def import_list(listId: int, limit: int = 0):
 def import_cast(movieLimit: int = 50, castLimit: int = 10):
     token = get_tmdb_token()
     if not token:
-        raise HTTPException(400, "Missing TMDB_TOKEN (or VITE_TMDB_V4_TOKEN). Add it to docker-compose environment and restart.")
+        raise HTTPException(400, "Missing TMDB_TOKEN. Add it to docker-compose environment and restart.")
     r = subprocess.run(
         ["python", "import_cast.py", "cast", str(movieLimit)],
         env={**os.environ, "CAST_LIMIT": str(castLimit), "TMDB_TOKEN": token},
@@ -165,7 +165,7 @@ def import_cast(movieLimit: int = 50, castLimit: int = 10):
 def import_bio(bioLimit: int = 50):
     token = get_tmdb_token()
     if not token:
-        raise HTTPException(400, "Missing TMDB_TOKEN (or VITE_TMDB_V4_TOKEN). Add it to docker-compose environment and restart.")
+        raise HTTPException(400, "Missing TMDB_TOKEN. Add it to docker-compose environment and restart.")
 
     r = subprocess.run(
         ["python", "import_cast.py", "bio", str(bioLimit)],

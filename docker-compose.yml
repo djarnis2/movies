@@ -4,15 +4,15 @@ services:
     restart: always
     env_file: .env
     environment:
-      POSTGRES_DB: ${PG_DB}
-      POSTGRES_USER: ${PG_USER}
-      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - pg_movies_data:/var/lib/postgresql/data
     ports:
       - "5433:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${PG_USER} -d ${PG_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       retries: 10
 
@@ -23,9 +23,9 @@ services:
         condition: service_healthy
     env_file: .env
     environment:
-      FLYWAY_URL: jdbc:postgresql://pg:5432/${PG_DB}
-      FLYWAY_USER: ${PG_USER}
-      FLYWAY_PASSWORD: ${PG_PASSWORD}
+      FLYWAY_URL: jdbc:postgresql://pg:5432/${POSTGRES_DB}
+      FLYWAY_USER: ${POSTGRES_USER}
+      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD}
       FLYWAY_BASELINE_ON_MIGRATE: "true"
       FLYWAY_BASELINE_VERSION: "0"
     volumes:
@@ -43,12 +43,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
-    env_file:
-      - ./frontend/.env
+    env_file: .env
     environment:
+      TMDB_TOKEN: ${TMDB_TOKEN}
+      TMDB_LIST_ID: ${TMDB_LIST_ID}
       PG_HOST: pg
       PG_PORT: 5432
-      DATABASE_URL: postgresql://${PG_USER}:${PG_PASSWORD}@pg:5432/${PG_DB}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg:5432/${POSTGRES_DB}
       SELENIUM_REMOTE_URL: http://selenium:4444/wd/hub
       PYTHONPATH: /app
     depends_on:
@@ -68,6 +69,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      VITE_MOVIES_API: ${VITE_MOVIES_API}
     depends_on:
       - backend
     ports:
@@ -83,9 +87,11 @@ services:
       dockerfile: Dockerfile.scraper
     env_file: .env
     environment:
+      TMDB_TOKEN: ${TMDB_TOKEN}
+      TMDB_LIST_ID: ${TMDB_LIST_ID}
       PG_HOST: pg
       PG_PORT: 5432
-      DATABASE_URL: postgresql://${PG_USER}:${PG_PASSWORD}@pg:5432/${PG_DB}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg:5432/${POSTGRES_DB}
       SELENIUM_REMOTE_URL: http://selenium:4444/wd/hub
       PYTHONPATH: /app
     depends_on:

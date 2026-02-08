@@ -1,76 +1,82 @@
 ![Banner](/frontend/src/assets/🍿 _ _movies _⋆⋆⋆⋆⋆%20(5).png)
-# Movies
+# Movies (V2)
+#### A small full-stack app that imports your TMDB list into a PostgreSQL database and lets you browse movies, mark them as seen, and import cast + actor bios.
 
-## 1. Create `.env` file in root folder
+## Stack
+- Frontend: React (Vite)
+- Backend: FastAPI (Uvicorn)
+- DB: PostgreSQL (Docker)
+- Migrations: Flyway (Docker)
+- Scraper: Selenium (Docker) used for TMDB list export (bypasses TMDB list API limits)
 
-`POSTGRES_DB=movies_db`\
-`POSTGRES_USER=movies_user`\
-`POSTGRES_PASSWORD=*******` # use your own password
+---
+## Prerequisites
+- Docker + Docker Compose
+- Node.js (if you want to run frontend without Docker; optional)
+- Git (optional)
 
-`PG_HOST=localhost`\
-`PG_PORT=5433`\
-`PG_DB=${POSTGRES_DB}`\
-`PG_USER=${POSTGRES_USER}`\
-`PG_PASSWORD=${POSTGRES_PASSWORD}`
+---
 
-## 2. Start database
-
-Run `docker compose up -d --build` from root folder\
-Run `python tmdb_list_export.py` # to change list (see file line 77) ! This is a scraper (usefull because the api doesn't allow more than 20 movies)  and it will take about 40 sec per page (50 movies)
-
-## 3. Install requirements for python
-
-Go to backend and install the requirents:\
-`cd backend` \
-`pip install -r requirements.txt`
-
-## 4. Start backend
-
-Go back to root folder and start the backend from here (db.py is in root folder and is required for this step)\
-`cd ..` \
-`uvicorn backend.api:app --host 0.0.0.0 --port 8000`
-
-## 5. Start frontend
-
-Open a new terminal, go to frontend and start the fronted with:\
-`cd frontend`\
-`npm install`\
-`npm run dev`
-
-## 6. Open app in localhost
-
-open page with:
-`http://localhost:5175/`
-
-## 7. Next time (quick start)
-
-* `docker compose up -d`
-* `uvicorn backend.api:app --host 0.0.0.0 --port 8000`
-* `cd frontend`\
-`npm run dev`
-
-## 8. The app keeps two lists
-
-* A. The complete list of movies you own (Or mine, if you didn.t change list).\
-* B. A smaller list with those movies you havn't seen -You can mark a movie as seen, to remove it from this list.\
-
-The `seen_movies` list can be exported to `init_seen.sql`:
-
+## 1. Download the code
+Option A (recommended): clone with Git:
 ```bash
-psql -U movies_user -d movies_db -p 5433 -c "COPY (SELECT 'INSERT INTO seen_movies (movie_id) VALUES (' || movie_id || ');' FROM seen_movies) TO STDOUT" > init_seen.sql
+git clone git@github.com:djarnis2/movies.git
+cd movies
 ```
+Option B: download ZIP from GitHub and unzip it, then open the folder.
 
-And it can then later be restored from that `init_seen.sql` file with:
+## 2. TMDB account
 
-```bash
-psql -U movies_user -d movies_db -p 5433 -f init_seen.sql
-```
+You need to make an account at TMDB. Here you can make a list of movies or you can use my list as default. You will also need to get a token.
 
-## 9. Make your own list
+https://www.themoviedb.org/signup
+
+Make your acount, apply for API key. Go through the process. Copy the `API Read Access Token` for later.
+
+
+
+## 2. Make your own list
 
 https://www.themoviedb.org/list/new
 
-## 10. Make script for automatic start with docker desktop
+
+## 3. Create `.env` file in root folder
+Create a file named `.env` in the root folder:
+
+`POSTGRES_DB=movies_db` Or use your own databasename\
+`POSTGRES_USER=movies_user` Or use your own username\
+`POSTGRES_PASSWORD=*******` Use your own password
+
+`VITE_MOVIES_API=http://localhost:8000` Or use another url
+`TMDB_TOKEN=` Insert token 
+`TMDB_LIST_ID=8531258` Or insert your own list ID
+
+## 5. Start Docker
+
+Run `docker compose up -d --build` from root folder\
+
+What happens:
+
+* Postgres starts and creates DB/user from POSTGRES_* (first run only)
+
+* Flyway runs DB migrations
+
+* Selenium starts (headless Chrome)
+
+* Backend starts on http://localhost:8000
+
+* Frontend starts on http://localhost:5173
+
+## 5. Open the app 
+Open your browser at http://localhost:5173 \
+
+When the app is up and running, it will be empty at first. Go to the import page and import from list (leave blank to import from the list in env)
+
+This will take some time, so be patient and wait until finished. There is a timer so you can see the import is at work.
+
+After this you can choose to import actors and their bios. This will also take some time, especially bios if you choose more than 10 actors per movie
+
+## 6. Make script for automatic start with docker desktop
 
 In this script docker desktop is installed in the folder:\
 `C:\Program Files\Docker\Docker\Docker`\
@@ -108,7 +114,7 @@ if %ERRORLEVEL% neq 0 (
 :waitloop
 docker info >nul 2>&1
 if %ERRORLEVEL% neq 0 (
-    timeout \t 2 >nul
+    timeout /t 2 >nul
     goto waitloop
 )
 
@@ -117,12 +123,6 @@ cd C:\Projects\ReactProjects\movies
 
 :: Start Docker Containers
 docker compose up -d
-
-:: Start backend
-start cmd /k "uvicorn backend.api:app --host 0.0.0.0 --port 8000"
-
-:: Start frontend
-start cmd /k "cd frontend && npm run dev" 
 
 :: Open browser
 start http://localhost:5173/

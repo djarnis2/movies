@@ -3,7 +3,6 @@ const API_BASE =
   import.meta.env.VITE_MOVIES_API || "http://localhost:8000";
 console.log("VITE_MOVIES_API =", import.meta.env.VITE_MOVIES_API);
 console.log("API_BASE =", API_BASE);
-const LIST_NUM = import.meta.env.VITE_TMDB_LIST_ID;
   
 
 /* Henter ALLE film fra dit FastAPI-backend */
@@ -57,11 +56,11 @@ export async function import_bio(bioLimit = 50) {
   });
   return res.json();
 }
-export async function import_list(listId=LIST_NUM, limit = 0) {
-  const qs = new URLSearchParams({
-    listId: String(listId),
-    limit: String(limit),
-  });
+export async function import_list(listId, limit = 0) {
+  const qs = new URLSearchParams();
+  if (listId !== undefined) qs.set("listId", String(listId));
+  qs.set("limit", String(limit));
+
   const res = await fetch(`${API_BASE}/admin/import/list?${qs.toString()}`,{
     method: "POST",
   });

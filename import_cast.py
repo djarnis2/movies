@@ -10,13 +10,13 @@ from db import get_connection, upsert_actor, upsert_movie_cast
 ROOT = Path(__file__).resolve().parent
 load_dotenv(ROOT / "frontend" / ".env")
 
-TMDB_TOKEN = os.getenv("TMDB_TOKEN") or os.getenv("VITE_TMDB_V4_TOKEN")
+TMDB_TOKEN = os.getenv("TMDB_TOKEN")
 TMDB_BASE = "https://api.themoviedb.org/3"
 
 CAST_LIMIT = int(os.getenv("CAST_LIMIT", "20"))
 
 if not TMDB_TOKEN:
-    raise SystemExit("Missing VITE_TMDB_V4_TOKEN in frontend .env/.env.local")
+    raise SystemExit("Missing TMDB_TOKEN")
 
 print("Token loaded OK (length):", len(TMDB_TOKEN))
 
