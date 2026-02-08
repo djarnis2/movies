@@ -9,7 +9,7 @@ import {
 import MovieCard from "../components/MovieCard";
 import "../css/NotSeen.css";
 
-function NotSeen() {
+function NotSeen({ resetTick = 0 }) {
   const [allMovies,  setAllMovies] = useState([]);   // alle film der IKKE er set
   const [movieList,  setMovies]    = useState([]);   // filtreret visning
   const [seenIds,    setSeenIds]   = useState([]);   // sete id’er (fra DB)
@@ -29,6 +29,11 @@ function NotSeen() {
       .catch(() => setError("Failed to load data…"))
       .finally(() => setLoading(false));
   }, []);
+
+    useEffect(() => {
+    setSearchQuery("");
+    setMovies(allMovies);
+  }, [resetTick, allMovies])
 
   /* -------- lokal søgning -------- */
   const handleSearch = (e) => {

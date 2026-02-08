@@ -5,6 +5,9 @@
   background-color: #1a1a1a;
   transition: transform 0.2s;
   height: 100%;
+  width: 100%;
+  max-inline-size: clamp(14rem, 20vw, 18rem);
+  justify-self: center;
   display: flex;
   flex-direction: column;
 }
@@ -109,14 +112,48 @@
   margin-top: auto;
 }
 
+.Buttons {
+  margin-top: auto;
+  font-size: small;
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: center;
+  background-color: #6063b669;
+  border: none;
+  padding: 0.3rem;
+  border-radius: 6px;
+  gap: 0.2rem;
+}
 .TMDB-btn {
   margin-top: auto;
-  align-self: flex-start;
-  background-color: #007BFF;
-  color: white;
+  background-color: rgba(0, 0, 0, 0.9);
+  color: #757cf8;
+  font-weight: 500;
   border: none;
   padding: 0.5rem 1rem;
-  border-radius: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.Actor-btn {
+  margin-top: auto;
+  background-color: rgba(0, 0, 0, 0.9);
+  color: #757cf8;
+  font-weight: 500;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.Description-btn {
+  margin-top: auto;
+  background-color: rgba(0, 0, 0, 0.9);
+  color: #757cf8;
+  font-weight: 500;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
   cursor: pointer;
 }
 

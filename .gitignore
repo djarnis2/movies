@@ -33,6 +33,7 @@ Thumbs.db
 
 # CSV / backup
 tmdb_my_movies.csv
+tmdb_my_movies_backup.csv
 init_seen_backup.sql
 init.sql
 dokumenter/
@@ -40,6 +41,7 @@ dokumenter/
 # IDE/Editor
 .vscode/
 .idea/
+.vs/
 
 # OS-specific
 *.swp

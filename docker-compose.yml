@@ -4,21 +4,24 @@ services:
     restart: always
     env_file: .env
     environment:
-      POSTGRES_DB:       ${PG_DB}
-      POSTGRES_USER:     ${PG_USER}
+      POSTGRES_DB: ${PG_DB}
+      POSTGRES_USER: ${PG_USER}
       POSTGRES_PASSWORD: ${PG_PASSWORD}
     volumes:
       - pg_movies_data:/var/lib/postgresql/data
     ports:
-      - "5433:5432"            # kun hvis du vil tilgå DB’en fra host
+      - "5433:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${PG_USER} -d ${PG_DB}"]
       interval: 10s
-      retries: 5
+      retries: 10
+
   flyway:
     image: flyway/flyway:10
     depends_on:
-      - pg
+      pg:
+        condition: service_healthy
+    env_file: .env
     environment:
       FLYWAY_URL: jdbc:postgresql://pg:5432/${PG_DB}
       FLYWAY_USER: ${PG_USER}
@@ -30,5 +33,74 @@ services:
     command: -connectRetries=60 migrate
     restart: "no"
 
+  selenium:
+    image: selenium/standalone-chrome:latest
+    shm_size: "2gb"
+    ports:
+      - "4444:4444"
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    env_file:
+      - ./frontend/.env
+    environment:
+      PG_HOST: pg
+      PG_PORT: 5432
+      DATABASE_URL: postgresql://${PG_USER}:${PG_PASSWORD}@pg:5432/${PG_DB}
+      SELENIUM_REMOTE_URL: http://selenium:4444/wd/hub
+      PYTHONPATH: /app
+    depends_on:
+      pg:
+        condition: service_healthy
+      flyway:
+        condition: service_completed_successfully
+      selenium:
+        condition: service_started
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+    command: uvicorn backend.api:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    command: npm run dev -- --host 0.0.0.0 --port 5173
+
+  scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile.scraper
+    env_file: .env
+    environment:
+      PG_HOST: pg
+      PG_PORT: 5432
+      DATABASE_URL: postgresql://${PG_USER}:${PG_PASSWORD}@pg:5432/${PG_DB}
+      SELENIUM_REMOTE_URL: http://selenium:4444/wd/hub
+      PYTHONPATH: /app
+    depends_on:
+      pg:
+        condition: service_healthy
+      flyway:
+        condition: service_completed_successfully
+      selenium:
+        condition: service_started
+    volumes:
+      - ./:/app
+    working_dir: /app
+    command: python tmdb_list_export.py
+    restart: "no"
+
 volumes:
   pg_movies_data:
+  frontend_node_modules:

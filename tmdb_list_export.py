@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 import csv, time, re, db, requests
 import json
-
+import os
 
 SIZE_RE = re.compile(r"^/t/p/[^/]+/")
 
@@ -19,7 +19,11 @@ options.add_argument("--disable-dev-shm-usage")
 
 db.init_schema()
 
-driver = webdriver.Chrome(options=options)
+remote_url = os.getenv("SELENIUM_REMOTE_URL") 
+if remote_url:
+    driver = webdriver.Remote(command_executor=remote_url, options=options)
+else:
+    driver = webdriver.Chrome(options=options)
 wait = WebDriverWait(driver, 10)
 
 YEAR_ANY_RE = re.compile(r'\b(19|20)\d{2}\b')

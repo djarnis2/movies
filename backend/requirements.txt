@@ -2,3 +2,7 @@ fastapi
 uvicorn[standard]
 psycopg2-binary      # allerede brugt af db.py
 python-dotenv
+requests
+selenium
+beautifulsoup4
+requests

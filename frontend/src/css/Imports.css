@@ -1,0 +1,29 @@
+.imports {
+  padding: 2rem 25%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.import-form {
+  display: flex;
+  align-items: end;          /* knappen flugter med inputs */
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 220px;          /* så de ikke bliver for smalle */
+}
+
+.field label {
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+.field input {
+  padding: 8px 10px;
+}

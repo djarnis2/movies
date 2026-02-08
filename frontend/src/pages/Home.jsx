@@ -9,7 +9,7 @@ import {
 import MovieCard from "../components/MovieCard";
 import "../css/Home.css";
 
-function Home() {
+function Home( resetTick = 0 ) {
   const [allMovies, setAllMovies] = useState([]);   // fuld liste
   const [movieList, setMovies]   = useState([]);    // filtreret visning
   const [seenIds,   setSeenIds]  = useState([]);    // sete id’er
@@ -28,6 +28,11 @@ function Home() {
       .catch(() => setError("Failed to load data"))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    setSearchQuery("");
+    setMovies(allMovies);
+  }, [resetTick, allMovies])
 
   /* -------------- lokal søgning -------------- */
   const handleSearch = (e) => {

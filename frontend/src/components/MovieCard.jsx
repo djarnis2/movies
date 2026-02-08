@@ -1,17 +1,43 @@
 import "../css/MovieCard.css";
 import MovieLink from "./MoveLink";
-import { useState } from "react";
+import ActorLink from "./ActorLink";
+import { useEffect, useState } from "react";
+import DescriptionLink from "./DescriptionLink";
 
 
 function MovieCard({ movie, seenIds, toggle }) {
     const [btnPopup, setBtnPopup] = useState(false);
+    const [actorBtnPopup, setActorBtnPopup] = useState(false);
+    const [actors, setActors] = useState([]);
+    const [descriptionBtnPopup, setDescriptionBtnPopup] = useState(false)
+
+    useEffect(() => {
+        if (!actorBtnPopup) return;
+
+        const loadActors = async () => {
+            try {
+                const API_BASE = "http://localhost:8000"
+                const res = await fetch(`${API_BASE}/movies/${movie.id}`);
+                const data = await res.json();
+
+                const profiles = (data.cast ?? []);
+                setActors(profiles);
+            } catch (err) {
+                console.error("Failed to load actor profiles, err");
+                setActors([]);
+            }
+        };
+
+        loadActors();
+    }, [actorBtnPopup, movie.id]);
+
 
     const markAsSeen = () => {
         const seen = JSON.parse(localStorage.getItem("seenMovies") || "[]");
         if (!seen.includes(movie.id)) {
             const updated = [...seen, movie.id];
             localStorage.setItem("seenMovies", JSON.stringify(updated));
-            
+
             console.log(seen.length);
             console.log(`Marked ${movie.title} as seen`)
         }
@@ -28,6 +54,8 @@ function MovieCard({ movie, seenIds, toggle }) {
     const baseurl = "https://www.themoviedb.org/";
     const movie_url = movie.rel_url;
     const url = baseurl + movie_url;
+
+
     return <div className="movie-card">
         <div className="movie-poster">
             <img
@@ -47,16 +75,30 @@ function MovieCard({ movie, seenIds, toggle }) {
         <div className="movie-info">
 
             <h3>{movie.title} &nbsp; ⭐ {movie.rating}% &nbsp; <img src="/images/year.png" height="12" /> {movie.year}</h3>
-            <div className="movie-description">
-                <p>{movie.description}</p>
-            </div>
-            <button className="TMDB-btn" onClick={() => setBtnPopup(true)}>TMDB</button>
 
-            <MovieLink
-                trigger={btnPopup}
-                url_link={url}
-                closePopup={() => setBtnPopup(false)}>
-            </MovieLink>
+            <div className="Buttons">
+                <button className="Description-btn" onClick={() => setDescriptionBtnPopup(true)}>Description</button>
+                <DescriptionLink
+                    trigger={descriptionBtnPopup}
+                    movie={movie}
+                    closePopup={() => setDescriptionBtnPopup(false)}>
+                </DescriptionLink>
+                <button className="TMDB-btn" onClick={() => setBtnPopup(true)}>TMDB</button>
+                <MovieLink
+                    trigger={btnPopup}
+                    url_link={url}
+                    closePopup={() => setBtnPopup(false)}>
+                </MovieLink>
+
+                <button className="Actor-btn" onClick={() => setActorBtnPopup(true)}>Actors</button>
+                <ActorLink
+                    trigger={actorBtnPopup}
+                    actors={actors}
+                    closePopup={() => setActorBtnPopup(false)}>
+                </ActorLink>
+
+            </div>
+
         </div>
 
     </div>
