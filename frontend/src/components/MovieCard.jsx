@@ -21,6 +21,11 @@ function MovieCard({ movie, seenIds, toggle }) {
                 const data = await res.json();
 
                 const profiles = (data.cast ?? []);
+                if (profiles.length === 0) {
+                    setActors([]);
+                    setActorBtnPopup(false)
+                    return; // "skip resten"
+                }
                 setActors(profiles);
             } catch (err) {
                 console.error("Failed to load actor profiles, err");

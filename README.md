@@ -43,13 +43,13 @@ https://www.themoviedb.org/list/new
 ## 3. Create `.env` file in root folder
 Create a file named `.env` in the root folder:
 
-`POSTGRES_DB=movies_db` Or use your own databasename\
-`POSTGRES_USER=movies_user` Or use your own username\
-`POSTGRES_PASSWORD=*******` Use your own password
+POSTGRES_DB=movies_db #Or use your own databasename\
+POSTGRES_USER=movies_user #Or use your own username\
+POSTGRES_PASSWORD=secret #Use your own password
 
-`VITE_MOVIES_API=http://localhost:8000` Or use another url
-`TMDB_TOKEN=` Insert token 
-`TMDB_LIST_ID=8531258` Or insert your own list ID
+VITE_MOVIES_API=http://localhost:8000 #Or use another url
+TMDB_TOKEN=??? #Insert token 
+TMDB_LIST_ID=8531258 #Or insert your own list ID
 
 ## 5. Start Docker
 
