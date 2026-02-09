@@ -51,6 +51,9 @@ services:
       TMDB_LIST_ID: ${TMDB_LIST_ID}
       PG_HOST: pg
       PG_PORT: 5432
+      PG_DB: ${POSTGRES_DB}
+      PG_USER: ${POSTGRES_USER}
+      PG_PASSWORD: ${POSTGRES_PASSWORD}
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg:5432/${POSTGRES_DB}
       SELENIUM_REMOTE_URL: http://selenium:4444/wd/hub
       PYTHONPATH: /app

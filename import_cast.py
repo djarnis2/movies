@@ -36,23 +36,22 @@ def get_credits(tmdb_id: int):
     r.raise_for_status()
     return r.json()
 
-def get_movies_missing_cast(limit: int = None):
+def get_movies_with_cast_below(min_cast: int, limit: int = None):
     sql = """
-    SELECT id, title, tmdb_id, rel_url
+    SELECT m.id, m.title, m.tmdb_id, m.rel_url, COUNT(mc.actor_id) AS cast_count
     FROM movies m
-    WHERE NOT EXISTS (
-        SELECT 1 FROM movie_cast mc
-        WHERE mc.movie_id = m.id
-      )
-    ORDER BY title
+    LEFT JOIN movie_cast mc ON mc.movie_id = m.id
+    GROUP BY m.id, m.title, m.tmdb_id, m.rel_url
+    HAVING COUNT(mc.actor_id) < %s
+    ORDER BY m.title
     """
-    params = None
+    params = [min_cast]
     if limit is not None:
         sql += " LIMIT %s"
-        params = (limit,)
+        params.append(limit)
 
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(sql, params)
+        cur.execute(sql, tuple(params))
         cols = [c[0] for c in cur.description]
         return [dict(zip(cols, row)) for row in cur.fetchall()]
 
@@ -81,6 +80,16 @@ def get_actors_missing_bio(limit: int = None):
         cols = [c[0] for c in cur.description]
         return [dict(zip(cols, row)) for row in cur.fetchall()]
 
+def get_existing_tmdb_person_ids(cur, movie_id: int) -> set[int]:
+    cur.execute("""
+        SELECT a.tmdb_person_id
+        FROM movie_cast mc
+        JOIN actors a ON a.id = mc.actor_id
+        WHERE mc.movie_id = %s
+        AND a.tmdb_person_id IS NOT NULL
+                """, (movie_id,))
+    return {row[0] for row in cur.fetchall()}
+
 def fill_missing_biographies(limit: int = None):
     actors = get_actors_missing_bio(limit)
     print(f"Actors missing biography: {len(actors)}")
@@ -108,42 +117,95 @@ def main():
 
     if mode == "cast":
 
-        movies = get_movies_missing_cast(limit)
-        print(f"Movies missing cast: {len(movies)}")
+        movies = get_movies_with_cast_below(CAST_LIMIT, limit)
+        print(f"Movies missing cast < {CAST_LIMIT}: {len(movies)}")
+
+        stats = {
+            "movies_total": len(movies),
+            "movies_tmdb_missing_id": 0,
+            "movies_no_cast_from_tmdb": 0,
+            "movies_changed": 0,
+            "movies_unchanged": 0,
+            "actors_added_total": 0
+        }
+
+        changed_titles = []
+        no_cast_titles = []
 
         with get_connection() as conn, conn.cursor() as cur:
             for m in movies:
                 local_movie_id = m.get("id")
                 title = m.get("title")
+                existing = get_existing_tmdb_person_ids(cur, local_movie_id)
 
                 tmdb_id = m.get("tmdb_id") or extract_tmdb_id(m.get("rel_url"))
                 if not tmdb_id:
-                    print(f"SKIP: no tmdb_id for {title}")
+                    stats["movies_tmdb_missing_id"] += 1
                     continue
 
+                
                 credits = get_credits(tmdb_id)
-                cast = credits.get("cast", [])[:CAST_LIMIT]
-                if not cast:
-                    print(f"  -> No cast returned from TMDB for tmdb_id={tmdb_id}")
+                cast_list = credits.get("cast", [])
+                if not cast_list:
+                    stats["movies_no_cast_from_tmdb"] += 1
+                    if len(no_cast_titles) < 5:
+                        no_cast_titles.append(title)
+                    continue
 
-                print(f"\n{title} (tmdb_id={tmdb_id})")
+                start_count = len(existing)
+                missing = max(0, CAST_LIMIT - start_count)
 
-                for c in cast:
+                added = 0
+                for c in cast_list:
+                    if added >= missing:
+                        break
+
                     person_id = c.get("id")  # TMDB person id
-                    name = c.get("name") or ""
+                    name = (c.get("name") or "").strip()
+
                     profile_path = c.get("profile_path")
                     character_name = c.get("character")
                     order = c.get("order")
 
-                    print(f"  - {name} as {character_name}")
-
                     if not person_id or not name:
                         continue
+                    if person_id in existing:
+                        continue # skipping existing actors fetched
 
                     actor_db_id = upsert_actor(cur, person_id, name, profile_path)
                     upsert_movie_cast(cur, local_movie_id, actor_db_id, character_name, order)
+                    existing.add(person_id)
+                    added += 1
+
+                stats["actors_added_total"] += added
+                if added > 0:
+                    stats["movies_changed"] += 1
+                    if len(changed_titles) < 5:
+                        changed_titles.append(f"{title} (+{added})")
+                else:
+                    stats["movies_unchanged"] += 1
                     
             conn.commit()
+            print("\n=== CAST IMPORT SUMMARY ===")
+            print(f"Target cast per movie: {CAST_LIMIT}")
+            print(f"Movies considered (<{CAST_LIMIT} cast): {stats['movies_total']}")
+            print(f"Movies changed: {stats['movies_changed']}")
+            print(f"Movies unchanged: {stats['movies_unchanged']}")
+            print(f"Total actors added: {stats['actors_added_total']}")
+            print(f"Movies missing tmdb_id: {stats['movies_tmdb_missing_id']}")
+            print(f"Movies where TMDB returned no cast: {stats['movies_no_cast_from_tmdb']}")
+
+            if changed_titles:
+                print("\nExamples changed:")
+                for s in changed_titles:
+                    print(" -", s)
+
+            if no_cast_titles:
+                print("\nExamples with no TMDB cast:")
+                for s in no_cast_titles:
+                    print(" -", s)
+
+
     elif mode == "bio":
         fill_missing_biographies(limit)
     

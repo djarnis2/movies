@@ -1,7 +1,12 @@
 .imports {
-  padding: 2rem 25%;
+  padding: 2rem 5%;
   width: 100%;
   box-sizing: border-box;
+  margin: auto;
+}
+
+.title {
+  text-align: center;
 }
 
 .import-form {
@@ -16,7 +21,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  min-width: 220px;          /* så de ikke bliver for smalle */
+  min-width: 300px;          /* så de ikke bliver for smalle */
 }
 
 .field label {
@@ -26,4 +31,44 @@
 
 .field input {
   padding: 8px 10px;
+}
+
+.import-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  min-width: 0;
+}
+
+.bio-container form {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.bio-container button {
+  margin-top: auto;   /* skubber knappen ned i bunden */
+  align-self: flex-start;
+}
+
+.output-container{
+  max-width: 900px;
+  margin: 1.5rem auto;  
+  text-align: center;
+}
+
+.form {
+  margin: auto;
+}
+
+@media (max-width: 600px) {
+  .field {
+    min-width: 0;     /* må gerne blive smallere */
+    width: 100%;
+  }
+
+  .field input {
+    width: 100%;
+    box-sizing: border-box;
+  }
 }

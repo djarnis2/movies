@@ -139,125 +139,160 @@ function Imports() {
 
     return (
         <div className="imports">
-            <h2>Import movies, cast and actor biographies</h2>
-
-            {/* LIST IMPORT */}
-            <form onSubmit={handleMovieList}>
-                <div className="field">
-                    <label htmlFor="list_num">TMDB List number</label>
-                    <input type="number"
-                        placeholder="TMDB List or leave blanc for default"
-                        value={listQuery}
-                        onChange={(e) => setListQuery(e.target.value)}
-                    />
-                </div>
-                <div className="field">
-                    <label htmlFor="limit">Limit</label>
-                    <input
-                        type="number"
-                        placeholder="Limit (0 = all)"
-                        value={listLimitQuery}
-                        onChange={(e) => setListLimitQuery(e.target.value)}
-                    />
-                </div>
-                <button type="submit" disabled={isBusy || loadingList}>
-                    {loadingList ? "Importing list..." : "Import List"}
-                </button>
-            </form>
+            <h2 className="title">Import movies, cast and actor biographies</h2>
             <br />
-            <hr />
-            <br />
-            {isBusy && (
-                <div style={{ marginTop: "0.75rem" }}>
-                    <div><strong>Running:</strong> {runningLabel}</div>
-                    <div><strong>Elapsed:</strong> {elapsed}s</div>
-                </div>
-            )}
-
-
-            {/* CAST IMPORT */}
-            <form onSubmit={handleCastImports}>
-                <div className="field">
-                    <label htmlFor="movie-limt">Movies to process</label>
-                    <input
-                        type="number"
-                        min="1"
-                        placeholder="Movies to process"
-                        value={movieLimitQuery}
-                        onChange={(e) => setMovieLimitQuery(e.target.value)}
-                    />
-                </div>
-                <div className="field">
-                    <label htmlFor="actors-per-movie">Actors per movie</label>
-                    <input
-                        type="number"
-                        min="1"
-                        placeholder="Actors per movie"
-                        value={castQuery}
-                        onChange={(e) => setCastQuery(e.target.value)}
-                    />
-                </div>
-                <button type="submit" disabled={isBusy || loadingCast}>
-                    {loadingCast ? "Importing cast..." : "Import Cast"}
-                </button>
-            </form>
-            <br />
-            <hr />
             <br />
 
-            {/* BIO IMPORT */}
-            <form onSubmit={handleBioImports}>
-                <div className="field">
-                    <label htmlFor="bio-input">Actors to fetch biographies for</label>
-                    <input
-                        type="number"
-                        min="1"
-                        placeholder="Actors to fetch biographies for"
-                        className="bio-input"
-                        value={bioQuery}
-                        onChange={(e) => setBioQuery(e.target.value)}
-                    />
+
+            <div className="import-container">
+
+                <div className="list-container">
+                    {/* LIST IMPORT */}
+                    <div className="import-form">
+                        <form className="form" onSubmit={handleMovieList}>
+                            <div className="field">
+                                <label htmlFor="list_num">TMDB List number</label>
+                                <input type="number"
+                                    placeholder="TMDB List or leave blanc for default"
+                                    value={listQuery}
+                                    onChange={(e) => setListQuery(e.target.value)}
+                                />
+                            </div>
+                            <div className="field">
+                                <label htmlFor="limit">Limit (number of movies)</label>
+                                <input
+                                    type="number"
+                                    placeholder="Limit (0 = all)"
+                                    value={listLimitQuery}
+                                    onChange={(e) => setListLimitQuery(e.target.value)}
+                                />
+                            </div>
+                            <button type="submit" disabled={isBusy || loadingList}>
+                                {loadingList ? "Importing list..." : "Import List"}
+                            </button>
+                        </form>
+
+                    </div>
+
                 </div>
-                <button type="submit" disabled={isBusy || loadingBio}>
-                    {loadingBio ? "Importing bios..." : "Import Bios"}
-                </button>
 
-            </form>
 
-            <br />
-            <hr />
-            <br />
 
-            {/* OUTPUT */}
-            {(loadingList || loadingCast || loadingBio) && (
-                <div style={{ marginTop: "1rem", opacity: 0.9 }}>
-                    <strong>Import running…</strong>
-                    <div>This can take several minutes. Please keep this page open.</div>
-                    <div>Output will appear when the import finishes.</div>
+
+                <div className="cast-container ">
+                    {/* CAST IMPORT */}
+                    <div className="import-form">
+                        <form className="form" onSubmit={handleCastImports}>
+                            <div className="field">
+                                <label htmlFor="movie-limt">Movies to process</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    placeholder="Movies to process"
+                                    value={movieLimitQuery}
+                                    onChange={(e) => setMovieLimitQuery(e.target.value)}
+                                />
+                            </div>
+                            <div className="field">
+                                <label htmlFor="actors-per-movie">Actors per movie</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    placeholder="Actors per movie"
+                                    value={castQuery}
+                                    onChange={(e) => setCastQuery(e.target.value)}
+                                />
+                            </div>
+                            <button type="submit" disabled={isBusy || loadingCast}>
+                                {loadingCast ? "Importing cast..." : "Import Cast"}
+                            </button>
+                        </form>
+                    </div>
+
+
                 </div>
-            )}
 
-            {error && <p style={{ color: "salmon" }}>{error}</p>}
+                <div className="bio-container">
+                    {/* BIO IMPORT */}
+                    <div className="import-form">
+                        <form className="form" onSubmit={handleBioImports}>
+                            <div className="field">
+                                <label htmlFor="bio-input">Actors to fetch biographies for</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    placeholder="Actors to fetch biographies for"
+                                    className="bio-input"
+                                    value={bioQuery}
+                                    onChange={(e) => setBioQuery(e.target.value)}
+                                />
+                            </div>
+                            <button type="submit" disabled={isBusy || loadingBio}>
+                                {loadingBio ? "Importing bios..." : "Import Bios"}
+                            </button>
 
-            {result && (
-                <div style={{ marginTop: "1rem" }}>
-                    <div>ok: {String(result.ok)} (code: {result.code})</div>
+                        </form>
+                    </div>
 
-                    {result.err && (
-                        <>
-                            <h4>stderr</h4>
-                            <pre style={{ whiteSpace: "pre-wrap" }}>{result.err}</pre>
-                        </>
-                    )}
-
-                    {result.out && (
-                        <>
-                            <h4>stdout</h4>
-                            <pre style={{ whiteSpace: "pre-wrap" }}>{result.out}</pre>
-                        </>
-                    )}
                 </div>
-            )}
+            </div>
+            <div className="output-container child">
+                {/* OUTPUT */}
+                {isBusy && (
+                    <div style={{ marginTop: "0.75rem", color: "blue" }}>
+                        <br />
+                        <hr></hr>
+                        <br />
+                        <div><strong>Running:</strong> {runningLabel}</div>
+                        <div><strong>Elapsed:</strong> {elapsed}s</div>
+                    </div>
+                )}
+                {(loadingList || loadingCast || loadingBio) && (
+                    <div style={{ marginTop: "1rem", opacity: 0.9, color: "green" }}>
+                        <br />
+                        <hr></hr>
+                        <br />
+                        <strong>Import running…</strong>
+                        <div>This can take several minutes. Please keep this page open.</div>
+                        <div>Output will appear when the import finishes.</div>
+                    </div>
+                )}
+
+                {error && (<><br /><hr /><br /><p style={{ color: "salmon" }}>{error}</p></>)}
+
+                {result && (
+                    <div style={{ marginTop: "1rem" }}>
+                        <br />
+                        <hr></hr>
+                        <br />
+                        <div>ok: {String(result.ok)} (code: {result.code})</div>
+
+                        {result.err && (
+                            <>
+                                <br />
+                                <hr></hr>
+                                <br />
+                                <h4>stderr</h4>
+                                <pre style={{ whiteSpace: "pre-wrap", color: "red" }}>{result.err}</pre>
+                            </>
+                        )}
+
+                        {result.out && (
+                            <>
+                                <br />
+                                <hr></hr>
+                                <br />
+                                <h4>stdout</h4>
+                                <pre style={{ whiteSpace: "pre-wrap", color: "green" }}>{result.out}</pre>
+                            </>
+                        )}
+                    </div>
+                )}
+            </div>
+
+
+
+
         </div>
     );
 }
