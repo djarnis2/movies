@@ -16,7 +16,7 @@ function NavBar({ onClearSearch = () => {} }) {
     <nav className="navbar">
         <div className="navbar-brand">
             <Link to="/" onClick={handleClick("/")} >
-                Min Film Database
+                My Movie Database
             </Link>
         </div>
 

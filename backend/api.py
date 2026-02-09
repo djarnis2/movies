@@ -5,6 +5,7 @@ from db import get_connection, init_schema
 import psycopg2
 import subprocess
 import os
+from typing import Optional
 
 app = FastAPI(title="My Movies API")
 init_schema() 
@@ -114,7 +115,7 @@ def remove_seen(movie_id: int):
     return {"ok": True}
 
 @app.post("/admin/import/list")
-def import_list(listId: int, limit: int = 0):
+def import_list(listId: Optional[int] = None, limit: int = 0):
     """
     Docstring for import_list
 
@@ -128,6 +129,15 @@ def import_list(listId: int, limit: int = 0):
             "Missing TMDB_TOKEN. Add it to docker-compose environment and restart."
         )
     
+    if listId is None:
+        env_list = os.getenv("TMDB_LIST_ID")
+        if not env_list:
+            raise HTTPException(
+                400,
+                "Missing listId and TMDB_LIST_ID is not set."
+            )
+        listId = int(env_list)
+
     cmd = ["python", "tmdb_list_export.py", str(listId)]
     if limit and limit > 0:
         cmd.append(str(limit))

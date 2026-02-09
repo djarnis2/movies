@@ -6,9 +6,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
-import csv, time, re, db, requests
-import json
-import os
+import time, re, db, requests, random, json, os, sys
+
 
 SIZE_RE = re.compile(r"^/t/p/[^/]+/")
 
@@ -17,7 +16,25 @@ options.add_argument("--headless=new")  # use "new" for new Chrome headless mode
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
 
+SESSION = requests.Session()
+SESSION.headers.update({"User-Agent": "TMDB-scraper/1.0"})
+
 db.init_schema()
+
+tmdb_list = None
+if len(sys.argv) >= 2:
+    tmdb_list = sys.argv[1]
+
+if not tmdb_list:
+    tmdb_list = os.getenv("TMDB_LIST_ID")
+
+if not tmdb_list:
+    raise SystemExit("Missing TMDB_LIST_ID (env) and no listId argument provided")
+
+
+limit = int(sys.argv[2]) if len(sys.argv) >= 3 else 0 # 0 = no limit
+
+count = 0
 
 remote_url = os.getenv("SELENIUM_REMOTE_URL") 
 if remote_url:
@@ -37,12 +54,41 @@ def extract_year_from_text(txt:str) -> int | None:
     y = int(m.group(0))
     return y if 1900 <= y <= 2100 else None
 
+# ---------- helper for fetch_description_and_poster() --------
+
+def get_with_retry(url: str, max_tries: int = 8, base_sleep: float = 2.0, timeout: int = 30):
+    for attempt in range(1, max_tries + 1):
+        r = SESSION.get(url, timeout=timeout)
+
+        # 429: wait and retry (honor Retry-After if present)
+        if r.status_code == 429:
+            retry_after = r.headers.get("Retry-After")
+            if retry_after:
+                sleep_s =  float(retry_after)
+            else:
+                sleep_s = base_sleep * (2 ** (attempt - 1))
+            
+            # add a bit of jitter
+            sleep_s += random.uniform(0, 1.0)
+            print(f" ⚠️ 429 from TMDB, sleeping {sleep_s:.1f}s (attempt {attempt}/{max_tries})")
+            sleep_s = min(sleep_s, 60)
+            time.sleep(sleep_s)
+            continue
+
+        r.raise_for_status()
+
+        time.sleep(0.35 + random.random() * 0.65)
+        return r
+
+    raise RuntimeError(f"Too many requests (429) after {max_tries} tries: {url}")
+
+
 # ---------- litle helper for synopsis ----------
+
 def fetch_description_and_poster(rel_url: str) -> tuple[str, str | None, int | None]:
     url = f"https://www.themoviedb.org{rel_url}"
-    r = requests.get(url, timeout=10,
-                     headers={"User-Agent": "TMDB-scraper/1.0"})
-    r.raise_for_status()
+    r = get_with_retry(url, timeout=10)
+    
     soup = BeautifulSoup(r.text, "html.parser")
 
     # --- description / overview ---
@@ -108,12 +154,27 @@ def fetch_description_and_poster(rel_url: str) -> tuple[str, str | None, int | N
 results = []
 batch = []
 page = 1
-print("Starter Selenium scraping...")
+throttle_hits = 0
+
+print("Starting Selenium scraping...")
 
 while True:
-    url = f"https://www.themoviedb.org/list/8531258-my-movies?page={page}"
-    print(f"Henter side {page}: {url}")
+    url = f"https://www.themoviedb.org/list/{tmdb_list}?page={page}"
+    print(f"Fetching page {page}: {url}")
     driver.get(url)
+    html = driver.page_source.lower()
+
+    if "temporarily throttled" in html or "wait and try again" in html:
+        throttle_hits += 1
+        sleep_s = min(30 * throttle_hits, 300)
+        print(f"⚠️ TMDB throttled (429 page). Sleeping {sleep_s}s then retrying...")
+        time.sleep(sleep_s)
+        if throttle_hits >= 5:
+            print("❌ Too many throttles. Aborting.")
+            break
+        continue
+    throttle_hits = 0
+
 
     # Accept cookies if necessary
     try:
@@ -125,12 +186,13 @@ while True:
         )
         rows = driver.find_elements(By.CSS_SELECTOR, ".list_items div[id][class*='table-row']")
     except:
-        print("❌ Ingen filmrækker fundet – stopper.")
+        print("❌ No futher movie-rows found – stopping.")
         break
 
     if not rows:
         break
     
+    added_movies_this_page = 0
     for row in rows:
         try:
             # title + TMDB-link
@@ -180,14 +242,22 @@ while True:
             poster_path,
             rel_url
         ))
+        count += 1
+        added_movies_this_page += 1
 
-    print(f"✅ Found {len(rows)} films on page {page}")
+        if limit and count >= limit:
+            break
+
+    print(f"✅ Found {added_movies_this_page} movies on page {page} (total {count})")
+
+    if limit and count >= limit:
+        print(f"🛑 Limit reached ({limit}), stopping.")
+        break
+
     page += 1
     time.sleep(0.5)
 
 driver.quit()
-
-
 
 # Save in db
 db.insert_movies(batch)

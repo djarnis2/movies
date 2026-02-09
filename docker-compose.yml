@@ -38,6 +38,8 @@ services:
     shm_size: "2gb"
     ports:
       - "4444:4444"
+    environment:
+      - SE_NODE_SESSION_TIMEOUT=1200
 
   backend:
     build:
@@ -81,31 +83,31 @@ services:
       - frontend_node_modules:/app/node_modules
     command: npm run dev -- --host 0.0.0.0 --port 5173
 
-  scraper:
-    build:
-      context: .
-      dockerfile: Dockerfile.scraper
-    env_file: .env
-    environment:
-      TMDB_TOKEN: ${TMDB_TOKEN}
-      TMDB_LIST_ID: ${TMDB_LIST_ID}
-      PG_HOST: pg
-      PG_PORT: 5432
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg:5432/${POSTGRES_DB}
-      SELENIUM_REMOTE_URL: http://selenium:4444/wd/hub
-      PYTHONPATH: /app
-    depends_on:
-      pg:
-        condition: service_healthy
-      flyway:
-        condition: service_completed_successfully
-      selenium:
-        condition: service_started
-    volumes:
-      - ./:/app
-    working_dir: /app
-    command: python tmdb_list_export.py
-    restart: "no"
+  # scraper:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.scraper
+  #   env_file: .env
+  #   environment:
+  #     TMDB_TOKEN: ${TMDB_TOKEN}
+  #     TMDB_LIST_ID: ${TMDB_LIST_ID}
+  #     PG_HOST: pg
+  #     PG_PORT: 5432
+  #     DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg:5432/${POSTGRES_DB}
+  #     SELENIUM_REMOTE_URL: http://selenium:4444/wd/hub
+  #     PYTHONPATH: /app
+  #   depends_on:
+  #     pg:
+  #       condition: service_healthy
+  #     flyway:
+  #       condition: service_completed_successfully
+  #     selenium:
+  #       condition: service_started
+  #   volumes:
+  #     - ./:/app
+  #   working_dir: /app
+  #   command: python tmdb_list_export.py
+  #   restart: "no"
 
 volumes:
   pg_movies_data:
