@@ -34,7 +34,24 @@ def list_movies():
             ORDER BY title
         """)
         cols = [c[0] for c in cur.description]
-        return [dict(zip(cols, row)) for row in cur.fetchall()]
+        movies = [dict(zip(cols, row)) for row in cur.fetchall()]
+
+        for movie in movies:
+            cur.execute("""
+                        SELECT 
+                        a.name 
+                        FROM movie_cast mc 
+                        JOIN actors a ON a.id = mc.actor_id 
+                        WHERE mc.movie_id = %s 
+                        ORDER BY mc.cast_order 
+                        LIMIT 10
+                        """, (movie["id"],))
+            movie["cast"] = [
+                {"name": row[0]}
+                for row in cur.fetchall()
+            ]
+        return movies
+
 
 @app.get("/movies/{movie_id}")
 def one_movie(movie_id: int):

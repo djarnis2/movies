@@ -21,11 +21,36 @@ export async function getMovie(id) {
 /* Lokal søgning i et allerede hentet array */
 export function searchMovies(list, term) {
   if (!term.trim()) return list;         // tom søgning → vis alt
+  
   const t = term.trim().toLowerCase();
+
   return list.filter((m) => {
     const title = m.title.toLowerCase();
     const description = m.description.toLowerCase();
-    return title.includes(t) || description.includes(t);
+
+    const casts = (m.cast || [])
+    .map((actor) => actor.name || "")
+    .join(" ")
+    .toLowerCase();
+
+    const match = 
+    title.includes(t) ||
+    description.includes(t) ||
+    casts.includes(t);
+
+    if (match) {
+        console.log("MATCH:", {
+          title: m.title,
+          search: t,
+          titleMatch: title.includes(t),
+          descriptionMatch: description.includes(t),
+          castMatch: casts.includes(t),
+          casts,
+        });
+      }
+
+    
+    return match;
   });
 }
 
