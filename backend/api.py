@@ -1,5 +1,4 @@
 from fastapi import FastAPI, HTTPException
-from db import get_connection
 from fastapi.middleware.cors import CORSMiddleware
 from db import get_connection, init_schema      
 import psycopg2

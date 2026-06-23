@@ -112,3 +112,63 @@ def upsert_movie_cast(cur, movie_id, actor_id, character_name=None, cast_order=N
             character_name = COALESCE(EXCLUDED.character_name, movie_cast.character_name),
             cast_order = COALESCE(EXCLUDED.cast_order, movie_cast.cast_order)
     """, (movie_id, actor_id, character_name, cast_order))
+
+def get_scraper_state(list_id: str) -> dict:
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+                SELECT last_known_page, last_seen_rel_url
+                FROM scraper_state
+                WHERE list_id = %s
+                """, (list_id,))
+    
+    row = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    if row is None:
+        return {
+            "last_known_page": 1,
+            "last_seen_rel_url": None
+        }
+    
+    return {
+        "last_known_page": row[0],
+        "last_seen_rel_url": row[1]
+    }
+
+def save_scraper_state(
+        list_id: str,
+        last_known_page: int,
+        last_seen_rel_url: str | None = None
+):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+                INSERT INTO scraper_state (list_id, last_known_page, last_seen_rel_url, updated_at)
+                VALUES (%s, %s, %s, now())
+                ON CONFLICT (list_id)
+                DO UPDATE SET
+                last_known_page = EXCLUDED.last_known_page,
+                last_seen_rel_url = EXCLUDED.last_seen_rel_url,
+                updated_at = now()
+                """, (list_id, last_known_page, last_seen_rel_url))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+
+def movie_exists(rel_url: str) -> bool:
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+                SELECT 1
+                FROM movies
+                WHERE rel_url = %s
+                LIMIT 1
+                """, (rel_url,))
+    return cur.fetchone() is not None

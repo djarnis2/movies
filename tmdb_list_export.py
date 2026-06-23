@@ -19,7 +19,7 @@ options.add_argument("--disable-dev-shm-usage")
 SESSION = requests.Session()
 SESSION.headers.update({"User-Agent": "TMDB-scraper/1.0"})
 
-db.init_schema()
+#db.init_schema()
 
 tmdb_list = None
 if len(sys.argv) >= 2:
@@ -151,14 +151,18 @@ def fetch_description_and_poster(rel_url: str) -> tuple[str, str | None, int | N
     
     return description, poster_path, year_detail
 
+state = db.get_scraper_state(tmdb_list)
 results = []
 batch = []
-page = 1
+page = state["last_known_page"] + 1
 throttle_hits = 0
+last_valid_page = None
+last_seen_rel_url = None
+
 
 print("Starting Selenium scraping...")
 
-while True:
+while page >= 1:
     url = f"https://www.themoviedb.org/list/{tmdb_list}?page={page}"
     print(f"Fetching page {page}: {url}")
     driver.get(url)
@@ -186,13 +190,20 @@ while True:
         )
         rows = driver.find_elements(By.CSS_SELECTOR, ".list_items div[id][class*='table-row']")
     except:
-        print("❌ No futher movie-rows found – stopping.")
-        break
+        print(f"❌ No Movie-rows found on {page}. Trying previous page.")
+        page -= 1
+        continue
 
     if not rows:
-        break
-    
+        print(f"❌ No rows on page {page}. TRying previous page.")
+        page -= 1
+        continue
+
+    last_valid_page = page
     added_movies_this_page = 0
+    stop_scraping = False
+    found_existing_movie = False
+
     for row in rows:
         try:
             # title + TMDB-link
@@ -205,6 +216,12 @@ while True:
         rel_url = link.get_attribute("href").replace(
             "https://www.themoviedb.org",""
         )
+
+        if db.movie_exists(rel_url):
+            print(f"🛑 Movie already fetched: {title} ({rel_url}), skipping")
+            last_seen_rel_url = rel_url
+            found_existing_movie = True
+            continue
 
 
         txt   = row.text
@@ -234,6 +251,8 @@ while True:
         description, poster_path, year_detail = fetch_description_and_poster(rel_url)
         year_final = year_from_list or year_detail
 
+        print(f"➕ New movie scraped: {title} ({rel_url})")
+        
         batch.append((
             title,
             year_final,
@@ -245,23 +264,37 @@ while True:
         count += 1
         added_movies_this_page += 1
 
+
         if limit and count >= limit:
             break
+        
+    if found_existing_movie:
+        print("🛑 Reached already scraped part of the list, stopping after finishing this page.")
+        stop_scraping = True
 
+    
     print(f"✅ Found {added_movies_this_page} movies on page {page} (total {count})")
+
+    if stop_scraping:
+        print(f"🛑 Found {added_movies_this_page} movies on page {page} (total {count})")
+        break
 
     if limit and count >= limit:
         print(f"🛑 Limit reached ({limit}), stopping.")
         break
 
-    page += 1
+    page -= 1
     time.sleep(0.5)
 
 driver.quit()
 
 # Save in db
-db.insert_movies(batch)
-batch.clear()
+if (batch):
+    db.insert_movies(batch)
+    batch.clear()
+
+if last_valid_page is not None:
+    db.save_scraper_state(tmdb_list, last_valid_page, last_seen_rel_url)
 
 # Save as CSV
 # with open("tmdb_my_movies.csv", "w", newline='', encoding="utf-8") as csvfile:
